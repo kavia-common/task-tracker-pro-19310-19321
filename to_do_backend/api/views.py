@@ -7,6 +7,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .serializers import RegisterSerializer, LoginSerializer, TodoSerializer
+from .serializers_user import UserProfileSerializer
 
 # SimpleJWT imports
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -108,6 +109,38 @@ def logout(request):
             pass
 
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# PUBLIC_INTERFACE
+@api_view(['GET', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def user_profile(request):
+    """
+    Retrieve or update the authenticated user's profile.
+
+    Security:
+    - Requires authentication (JWT Bearer or session).
+
+    Methods:
+    - GET: Returns the current user's profile (id, username, email)
+    - PATCH: Partially updates the current user's profile (username, email)
+
+    Returns:
+    - 200 OK with serialized user profile on success
+    - 400 Bad Request if validation fails for updates
+    """
+    user = request.user
+
+    if request.method == "GET":
+        serializer = UserProfileSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # PATCH
+    serializer = UserProfileSerializer(user, data=request.data, partial=True)
+    if serializer.is_valid():
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # PUBLIC_INTERFACE

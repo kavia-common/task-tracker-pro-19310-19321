@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import health, register, login, logout, RefreshTokenView, TodoViewSet
+from .views import health, register, login, logout, user_profile, RefreshTokenView, TodoViewSet
 
 router = DefaultRouter()
 # This will expose names 'todos-list' and 'todos-detail'
@@ -12,5 +12,6 @@ urlpatterns = [
     path('auth/login/', login, name='auth-login'),
     path('auth/logout/', logout, name='auth-logout'),
     path('auth/refresh/', RefreshTokenView.as_view(), name='auth-refresh'),
+    path('user-profile/', user_profile, name='user-profile'),
     path('', include(router.urls)),
 ]
