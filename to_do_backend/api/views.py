@@ -1,9 +1,12 @@
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status, viewsets
 from django.contrib.auth import login as django_login, logout as django_logout
-from .serializers import RegisterSerializer, LoginSerializer
+from rest_framework.authentication import SessionAuthentication
+from rest_framework_simplejwt.authentication import JWTAuthentication
+
+from .serializers import RegisterSerializer, LoginSerializer, TodoSerializer
 
 # SimpleJWT imports
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -119,3 +122,36 @@ class RefreshTokenView(TokenRefreshView):
     - 200 with { access }
     """
     pass
+
+
+# PUBLIC_INTERFACE
+class TodoViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for authenticated CRUD operations on user-owned Todo items.
+
+    Security:
+    - Requires JWT (Bearer) or session authentication.
+    - Results are scoped to request.user.
+    - On create, owner is automatically set to request.user.
+
+    Endpoints (via router):
+    - GET /api/todos/ -> list (name: todos-list)
+    - POST /api/todos/ -> create
+    - GET /api/todos/{pk}/ -> retrieve (name: todos-detail)
+    - PATCH /api/todos/{pk}/ -> partial_update
+    - PUT /api/todos/{pk}/ -> update
+    - DELETE /api/todos/{pk}/ -> destroy
+    """
+    serializer_class = TodoSerializer
+    permission_classes = [IsAuthenticated]
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
+
+    def get_queryset(self):
+        # Import locally to avoid circular imports at module load for migrations
+        from .models import Todo
+        # Restrict to items owned by the authenticated user
+        return Todo.objects.filter(owner=self.request.user)
+
+    def perform_create(self, serializer):
+        # Automatically assign owner to the authenticated user
+        serializer.save(owner=self.request.user)

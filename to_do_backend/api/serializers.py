@@ -36,3 +36,17 @@ class LoginSerializer(serializers.Serializer):
             raise serializers.ValidationError("Invalid credentials.")
         attrs["user"] = user
         return attrs
+
+
+# PUBLIC_INTERFACE
+class TodoSerializer(serializers.ModelSerializer):
+    """
+    Serializer for Todo model. Owner is read-only and inferred from request.user.
+    """
+    owner = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    class Meta:
+        from .models import Todo
+        model = Todo
+        fields = ("id", "title", "description", "completed", "owner", "created_at", "updated_at")
+        read_only_fields = ("id", "owner", "created_at", "updated_at")

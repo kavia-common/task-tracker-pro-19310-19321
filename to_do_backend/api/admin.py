@@ -1,1 +1,9 @@
-# Register your models here.
+from django.contrib import admin
+from .models import Todo
+
+
+@admin.register(Todo)
+class TodoAdmin(admin.ModelAdmin):
+    list_display = ("id", "title", "owner", "completed", "created_at", "updated_at")
+    list_filter = ("completed", "created_at")
+    search_fields = ("title", "description", "owner__username", "owner__email")
